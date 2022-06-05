@@ -1,0 +1,158 @@
+<?php
+$registry = Zend_Registry::getInstance();
+$db = $registry::get('db');
+/*
+ * on privilégie ici l'utilisation d'un curseur SQL, de préférence à FetchAll,
+ * car on risque de traiter de gros volumes, et un FetchAll pourrait entraîner
+ * un dépassement de capacité au niveau du serveur
+ */
+$stmt = $db->query($this->sql);
+$export_pdf_nbl_max = $registry::get('export_pdf_nbl_max');
+
+require_once("Zend/Pdf.php");
+require_once("Zend/Pdf/Page.php");
+require_once("Zend/Pdf/Image.php");
+require_once("Zend/Pdf/Font.php");
+
+$tab_colonnes = array();
+$tab_colonnes [0] = array('lib' => 'Code', 'width' => 30, 'align' => 'left');
+$tab_colonnes [1] = array('lib' => 'Nom et prénom', 'width' => 70, 'align' => 'left');
+
+
+/*
+ * classe destinée à simplifier la génération de tableaux
+ */
+require_once (APP_PATH_STD . '/library/class/Gorilla_Pdf.php' );
+
+$titre = $registry::get('APP_TITLE');
+
+$pdf = new Zend_Pdf(); 
+$pdf->properties['Title'] = $titre ;
+$pdf->properties['Author'] = 'inconnu' ;
+$pdf->properties['Subject'] = $titre ;
+$pdf->properties['Keywords'] = 'CRUD, Zend Framework' ;
+$pdf->properties['Creator'] = 'inconnu' ;
+
+
+$font = Zend_Pdf_Font::fontWithName(Zend_Pdf_Font::FONT_COURIER);
+
+$page = new Gorilla_Pdf_Page(Zend_Pdf_Page::SIZE_A4);
+
+/*
+ * définition des marges haute et gauche
+ */
+$margin_top = 10;
+$margin_left = 10;
+
+/*
+ * définition du logo
+ */
+$image = Zend_Pdf_Image::imageWithPath('images/Logo.jpg');
+$largeur_image = 171;
+$hauteur_image = 78;
+$ratio_reduc = 0.75;
+
+/*
+ * les coordonnées de l'image doivent être inversées pour une insertion correcte
+ */
+$img_coords[] = array();
+// coordonnées du coin en haut à droite
+$img_coords['x2'] = $margin_left + intval($largeur_image * $ratio_reduc);
+$img_coords['y2'] = $page->getHeight() - $margin_top;
+// coordonnées du coin en bas à gauche
+$img_coords['x1'] = $margin_left; // marge gauche
+$img_coords['y1'] = $img_coords['y2'] - intval($hauteur_image * $ratio_reduc);
+$page->drawImage($image, $img_coords['x1'], $img_coords['y1'], $img_coords['x2'], $img_coords['y2']);
+
+$margin_title_top = $page->getHeight() - $margin_top - 50;
+$margin_title_left = 200;
+$page->setFont($font, 14);
+$page->drawText($titre, $margin_title_left, $margin_title_top);
+$page->setFont($font, 8);
+
+// pour l'impression du tableau, on descend la marge haute de quelques pixels
+$margin_top = 90;
+
+$table = new Gorilla_Pdf_Table($page, $margin_left, $margin_top);
+
+//-- Output the table header
+$row = new Gorilla_Pdf_Table_Row();
+foreach ($tab_colonnes as $tab_col) {
+    $col = new Gorilla_Pdf_Table_Column();
+    $col->setWidth($tab_col['width'])->setText(utf8_decode($tab_col['lib']));
+    $col->setAlignment($tab_col['align']);
+    $row->addColumn($col);
+}
+$table->addRow($row);
+
+$compteur_page_lignes = 1;
+$compteur_lignes = 0;
+
+while ($data = $stmt->fetch()) {
+    /*
+     * gestion du saut de page (fixé arbitrairement à 60 lignes par page)
+     */
+    if ($compteur_page_lignes > 60) {
+        //-- Render the table to the pages/s
+        $pages = $table->render();
+
+        //-- If the table overflows onto a new page, they are created
+        $pdf->pages[] = $page;
+        foreach ($pages as $page) {
+            $pdf->pages[] = $page;
+        }
+        unset($pages);
+        unset($table);
+        unset($page);
+
+        $page = new Gorilla_Pdf_Page(Zend_Pdf_Page::SIZE_A4);
+        $page->setFont($font, 14);
+        $page->drawText($titre, $margin_title_left, $margin_title_top);
+        $page->setFont($font, 8);
+        $page->drawImage($image, $img_coords['x1'], $img_coords['y1'], $img_coords['x2'], $img_coords['y2']);
+
+        $table = new Gorilla_Pdf_Table($page, $margin_left, $margin_top);
+
+        //-- Output the table header (code identique au code se trouvant avant la boucle)
+        $row = new Gorilla_Pdf_Table_Row();
+        foreach ($tab_colonnes as $tab_col) {
+            $col = new Gorilla_Pdf_Table_Column();
+            $col->setWidth($tab_col['width'])->setText(utf8_decode($tab_col['lib']));
+            $col->setAlignment($tab_col['align']);
+            $row->addColumn($col);
+        }
+        $table->addRow($row);
+
+        $compteur_page_lignes = 1;
+    }
+
+    $row = new Gorilla_Pdf_Table_Row();
+
+    $col = new Gorilla_Pdf_Table_Column();
+    $col->setWidth($tab_colonnes[0]['width'])->setText(strval($this->escape($data['code'])));
+    $col->setAlignment($tab_colonnes[0]['align']);
+    $row->addColumn($col);
+
+    $col = new Gorilla_Pdf_Table_Column();
+    $col->setWidth($tab_colonnes[1]['width'])->setText(strval($this->escape($data['libelle'])));
+    $col->setAlignment($tab_colonnes[1]['align']);
+    $row->addColumn($col);
+
+    $table->addRow($row);
+    $compteur_lignes++;
+    if ($compteur_lignes > $export_pdf_nbl_max) {
+        break;
+    }
+    $compteur_page_lignes++;
+}
+
+//-- Render the table to the pages/s
+$pages = $table->render();
+
+//-- If the table overflows onto a new page, they are created
+$pdf->pages[] = $page;
+foreach ($pages as $page) {
+    $pdf->pages[] = $page;
+}
+
+echo $pdf->render();

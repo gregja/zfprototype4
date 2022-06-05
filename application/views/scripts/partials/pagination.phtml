@@ -1,0 +1,27 @@
+<?php 
+if ($this->pageCount) {
+    echo '<nav>';
+    echo '<ul class="pagination">';
+    //<!-- Previous page link -->
+    if (isset($this->previous)) {
+        echo '<li class="page-item"><a class="page-link" href="'. $this->url(array('page' => $this->previous)) . '">&lt;&lt; Préc.</a></li>';    
+    } else {
+        echo '<li class="page-item active"><a class="page-link" href="' . $this->url(array('page' => $this->previous)) . '">&lt;&lt; Préc.</a></li>';    
+    }
+    //<!-- Numbered page links -->
+    foreach ($this->pagesInRange as $page) {
+        if ($page != $this->current) {
+            echo '<li class="page-item"><a class="page-link" href="'. $this->url(array('page' => $page)) . '">' . $page .'</a></li>';    
+        } else {
+            echo '<li class="page-item active"><a class="page-link" href="'. $this->url(array('page' => $page)) . '">' . $page .'</a></li>';    
+        }
+    }
+    //<!-- Next page link -->
+    if (isset($this->next)) {
+        echo '<li class="page-item"><a class="page-link" href="'. $this->url(array('page' => $this->next)) . '">Suivant &gt;&gt;</a></li>';    
+    } else {
+        echo '<li class="page-item active"><a class="page-link" href="'. $this->url(array('page' => $this->next)) . '">Suivant &gt;&gt;</a></li>';    
+    }
+    echo '</ul>';
+    echo '</nav>';
+}

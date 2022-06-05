@@ -1,0 +1,46 @@
+<?php
+$db = Zend_Registry::get('db');
+/*
+ * on privilégie ici l'utilisation d'un curseur SQL, de préférence à FetchAll,
+ * car on risque de traiter de gros volumes, et un FetchAll pourrait entraîner
+ * un dépassement de capacité au niveau du serveur
+ */
+$stmt = $db->query($this->sql);
+$export_xls_nbl_max = Zend_Registry::get('export_xls_nbl_max');  
+
+// code sensé forcer l'ouverture de la page dans une autre page du navigateur (ne fonctionne
+// pas pour l'instant)
+//<script type="text/javascript" src="<body onLoad="javascript:window.print(); document.getElementById('frmListe').submit();">"></script>
+?><table>
+    <tr>
+        <th width="5%">Soc.</th>
+        <th width="10%">Personne</th>
+        <th width="10%"><?php echo utf8_decode('Réf.dossier'); ?></th>
+        <th width="10%">Date</th>
+        <th width="10%">Statut</th>
+        <th width="10%">Encours</th>
+        <th width="10%">Solde</th>
+    </tr>
+    <?php
+    $compteur_lignes = 0;
+    while ($data = $stmt->fetch()) {
+    ?>
+        <tr>
+            <td width="5%"><?php echo $this->escape($data['lib_societe']); ?></td>
+            <td width="10%"><?php echo $this->escape($data['lib_personne']); ?></td>
+            <td width="10%"><?php echo $this->escape($data['dossier_ref']); ?></td>
+            <td width="10%"><?php echo $this->escape($data['chgt_doss']); ?></td>
+            <td width="10%"><?php echo $this->escape($data['statut']); ?></td>
+            <td width="10%" align="right"><?php echo number_format($this->escape($data['encours_mnt']), 2, ',', ''); ?></td>
+            <td width="10%" align="right"><?php echo number_format($this->escape($data['solde_brut']), 2, ',', ''); ?></td>
+        </tr>
+    <?php
+        $compteur_lignes++;
+        if ($compteur_lignes > $export_xls_nbl_max) {
+            break;
+        }
+    }
+    ?>
+</table>
+<?php
+    echo '<br/>' . PHP_EOL;

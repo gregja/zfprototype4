@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="<?php echo $this->langDef(); ?>">
+<head>
+    <meta charset="<?php echo $this->encodingDef(); ?>">
+    <title><?php echo $this->escape($this->title); ?></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    <link href="<?php echo $this->baseUrl(); ?>/css/bootstrap-4.6.1-dist/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <script src="<?php echo $this->baseUrl(); ?>/js/jquery-3.6.0.min.js"></script>
+    <script src="<?php echo $this->baseUrl(); ?>/js/bootstrap-4.6.1-dist/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <script>
+        // Push in the array "js_hooks" all the JS functions you want to call when the DOM is ready
+        // Example : js_hooks.push("modale_filtre_client('modaleRechClients')");
+        var js_hooks = [];
+    </script>
+<?php 
+// if (isset($this->css_comp)) echo $this->css_comp . PHP_EOL; 
+ ?>
+<?php 
+ //$jquery = trim($this->jQuery()); if ($jquery != '') echo $jquery . PHP_EOL ; 
+ ?>
+</head>
+<body <?php 
+$this->jQuery()->getOnLoadActions();
+?>>
+<nav class="navbar navbar-expand-lg navbar-light bg-dark">
+    <a class="navbar-brand text-white" href="#">DBTulbox2</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+            <?php
+$profile = $this->profileLink();
+if (isset($this->naviglobal)) {
+    $navi_num = 1;
+    foreach ($this->naviglobal as $key => $val) {
+        $affiche_menu = false;
+        if ($profile != '') {
+            if ($val['auth'] == '*all' || $val['auth'] == '*auth') {
+                $affiche_menu = true;
+            }
+        } else {
+            if ($val['auth'] == '*all' || $val['auth'] == '*noauth') {
+                $affiche_menu = true;
+            }
+        }
+        if ($affiche_menu) {
+            echo '<li class="nav-item active" data-idmenu="';
+            if ($navi_num < 10) {
+                echo '0' . $navi_num;
+            } else {
+                echo $navi_num;
+            }
+            echo '">';
+            echo '<a class="nav-link text-white" href="'.$this->baseUrl() . '/' . $this->escape($val['link']).
+                '">'.$this->escape($val['description']).'</a>';
+            echo '</li>' . PHP_EOL;
+        }
+        $navi_num++;
+    }
+}
+?>
+        <ul>
+    </div>
+</nav>
+
+<section class="container">    
+<strong><?php echo $this->escape($this->title); ?></strong> &nbsp; | &nbsp; <a
+href="<?php echo $this->url(array('controller' => 'index', 'action' => 'index')); ?>">Accueil</a>
+<?php echo $this->layout()->content; ?>
+</section>
+<?php // }  ?>
+<br/>
+<footer>
+  <!-- Copyright -->
+  <div class=".bg-secondary mx-auto">© 2022 Copyright:
+    <a href="/"> The ACME Company </a>
+  </div>
+  <!-- Copyright -->
+</footer>
+<script>
+    window.addEventListener("DOMContentLoaded", (event) => {
+        console.log("DOM entièrement chargé et analysé");
+        <?php 
+        // echo $this->getJSContent(); 
+        ?>
+        jQuery('.datepicker').datepicker({
+            dateFormat: "yy-mm-dd"
+        });
+
+        if (js_hooks.length > 0) {
+            for (let i=0, imax=js_hooks.length; i<imax; i++) {
+                console.log(js_hooks[i]);
+                setTimeout(js_hooks[i], 1);
+            }
+        }
+    });
+</script>
+</body>
+</html>

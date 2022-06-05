@@ -1,0 +1,208 @@
+<?php
+
+$registry = Zend_Registry::getInstance();
+$db = $registry::get('db');
+/*
+ * on privilégie ici l'utilisation d'un curseur SQL, de préférence à FetchAll,
+ * car on risque de traiter de gros volumes, et un FetchAll pourrait entraîner
+ * un dépassement de capacité au niveau du serveur
+ */
+$stmt = $db->query($this->persql);
+
+
+echo '<fieldset>';
+echo'<legend>Modification</legend>';
+echo '<br/>'.PHP_EOL ;
+echo $this->form ;
+echo '<br/>'.PHP_EOL ;
+echo '</fieldset>'.PHP_EOL;
+
+
+?>
+<script>
+    function modale_filtre_client(domId) {
+        "use strict";
+        let domTarget = document.getElementById(domId);
+        if (!domTarget) {
+            console.error('cible du DOM non trouvée '+ domId);
+            return;
+        }
+        let filterCriteria = domTarget.querySelector('#filter_criteria');
+        let filterTargets  = domTarget.querySelectorAll('[data-filter]')
+        filterCriteria.addEventListener('change', (evt)=>{
+            evt.preventDefault();
+            let target = evt.currentTarget;
+            let criteria = String(target.value).trim().toLowerCase();
+            if (criteria == '') {
+                filterTargets.forEach(item=>{
+                  item.style.removeProperty('display');
+                  item.style.visibility = "visible";
+                })
+            } else {
+                filterTargets.forEach(item=>{
+                    if (String(item.getAttribute('data-filter')).toLowerCase().includes(criteria)) {
+                        item.style.visibility = "visible";
+                        item.style.removeProperty('display');
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+            }
+
+        })
+    }
+
+    function modale_select_client(node) {
+      "use strict";
+        let datas = {};
+        datas.id = node.getAttribute('data-id');
+        let parent = node.parentNode.parentNode;
+        datas.name = parent.getAttribute('data-filter');
+        let tbodyNode = parent.parentNode;
+        let domTarget = tbodyNode.getAttribute('data-formlink');
+        let refModale = tbodyNode.getAttribute('data-modalref');
+
+        let inputTarget = document.getElementById(domTarget);
+        if (!inputTarget) {
+          console.error('cible du DOM non trouvée '+ domTarget);
+          return;
+        }
+        let targetLib = document.getElementById('libelle_'+domTarget);
+        if (!targetLib) {
+          console.error('cible du DOM non trouvée : libelle_ '+ domTarget);
+          return;
+        }
+
+        inputTarget.value = String(datas.id).replace('id_', '');
+        inputTarget.setAttribute('data-infos', JSON.stringify(datas));
+        targetLib.value = node.getAttribute('data-libelle');
+
+        let windowTarget = document.querySelector(refModale);
+        if (!windowTarget) {
+            console.error('cible du DOM non trouvée '+ refModale);
+            return;
+        }        
+        jQuery(windowTarget).modal('hide');
+    }
+
+    function homogeneise_form () {
+      "use strict";
+      let items = document.querySelectorAll('dt')
+      for (let i=0, imax=items.length; i<imax; i++) {
+        items[i].classList.add('row');
+      }
+      items = document.querySelectorAll('dd')
+      for (let i=0, imax=items.length; i<imax; i++) {
+        items[i].classList.add('row');
+      }
+
+    }
+
+    function insertAfter(newNode, referenceNode) {
+      "use strict";
+      referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    }
+
+    function moveItemsOnPage(domTarget) {
+      "use strict";
+      let target1 = document.querySelectorAll('[data-hook='+domTarget+']')
+      if (!target1 || target1.length == 0) {
+        console.error('cible non trouvées dans le DOM pour l\'attribut [data-hook='+domTarget+'] ');
+        return;
+      }
+      let target2 = document.getElementById(domTarget); 
+      if (!target2) {
+        console.error('cible non trouvées dans le DOM : '+domTarget);
+        return;
+      } else {
+        target2.setAttribute('readonly', 'readonly');
+      }
+      let parent = target2.parentNode;
+      for (let i=0, imax=target1.length; i<imax; i++) {
+        insertAfter(target1[i], target2);
+      }
+      if (String(target2.value).trim() != '') {
+        rechercheLibelle(domTarget, target2.value);
+      }
+      
+    }
+
+    function rechercheLibelle(id, value) {
+      "use strict";
+      let targetListe = document.querySelector('[data-formlink='+id+']');
+      let tmpkey = '[data-id=id_'+value+']';
+      let tmpref = targetListe.querySelector(tmpkey); 
+      let targetLib = document.getElementById('libelle_'+id);
+      if (!tmpref) {
+        targetLib.value = '!!! Non trouvé !!!';
+      } else {
+        targetLib.value = tmpref.getAttribute('data-libelle');
+      }
+    }
+
+</script>    
+
+<div style="visibility:hidden" >
+  <span data-hook="personne_id">&nbsp;</span>
+  <input id="libelle_personne_id" type="text" class="form-control col-sm-6" value="" disabled data-hook="personne_id" />
+  <span data-hook="personne_id">&nbsp;</span>
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modaleRechClients" data-hook="personne_id" >
+    Recherche clients
+  </button>
+  <span data-hook="personne_id">&nbsp;</span>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="modaleRechClients" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="modaleRechClientsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modaleRechClientsLabel">Fenêtre de recherche sur les personnes</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+  <div class="form-group">
+    <label for="filter_criteria">Recherche</label>
+    <input type="text" class="form-control" id="filter_criteria" aria-describedby="Name filter">
+  </div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">&nbsp;</th>
+      <th scope="col">Code</th>
+      <th scope="col">Nom et prénom</th>
+    </tr>
+  </thead>
+  <tbody data-formlink="personne_id" data-modalref="#modaleRechClients">
+<?php
+while ($data = $stmt->fetch()) {
+echo <<<BLOC_TR
+<tr data-filter="|{$this->escape($data['code'])}|{$this->escape($data['libelle'])}|" >
+<th scope="row"><button class="btn btn-primary btn-sm" data-id=id_{$this->escape($data['id'])}
+    data-libelle="{$this->escape($data['libelle'])}" onclick="modale_select_client(this);">Sélect.</button></th>
+<th scope="row">{$this->escape($data['code'])}</th>
+<td>{$this->escape($data['libelle'])}</td>
+</tr>
+BLOC_TR;
+}
+?>
+  </tbody>
+</table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    js_hooks.push("modale_filtre_client('modaleRechClients')");
+    js_hooks.push("homogeneise_form()");
+    js_hooks.push("moveItemsOnPage('personne_id')");
+
+</script>

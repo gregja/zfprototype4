@@ -1,0 +1,26 @@
+<form name="DossierRecherche" id="DossierRecherche"
+      enctype="application/x-www-form-urlencoded"
+      action=""
+      method="post">
+<fieldset>
+<legend>Crit&egrave;res de s&eacute;lection</legend>
+<select name="zon_rech" id="zon_rech"  >
+<option value="id" >Identifiant</option>
+<option value="contrat" >Contrat</option>
+<option value="personne" >Personne</option>
+<option value="mot_generiq" >Mot générique</option>
+</select>
+&nbsp;<select name="typ_rech" id="typ_rech"  >
+<option value="=" >&eacute;gal</option>
+<option value=">" >sup&eacute;rieur</option>
+<option value="<" >inf&eacute;rieur</option>
+<option value="<=" >inf&eacute;rieur ou &eacute;gal</option>
+<option value=">=" >sup&eacute;rieur ou &eacute;gal</option>
+<option value="<>" >diff&eacute;rent</option>
+<option value="like" >contient</option>
+<option value="begin" >commence par</option>
+</select>
+&nbsp;<input type="text" name="val_rech" id="val_rech" value="" size="30" />
+&nbsp;<input type="submit" name="submit" id="submitbutton" value="Recherche" />
+</fieldset>
+</form>
