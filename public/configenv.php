@@ -45,6 +45,7 @@ $config = new Zend_Config_Ini(APP_PATH_STD . '/application/configs/config.ini', 
 $registry = Zend_Registry::getInstance();
 
 $registry->set('APP_TITLE', $config->app->title);
+$registry->set('CURRENT_DB', $config->db->params->dbname);
 
 // Démarrage de la session globale, bonne pratique référencée ici :
 //   http://framework.zend.com/manual/fr/zend.session.advanced_usage.html
