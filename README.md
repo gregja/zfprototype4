@@ -1,5 +1,22 @@
 # ZFPrototype4
 
+## Objectif du projet 
+
+Ce projet est un prototype d'application de type CRUD (acronyme de "Create, Read, Update, Delete") destiné à servir de modèle, de base de travail, pour le développement d'applications "métiers". J'avais développé ce projet, il y a quelques années, en pensant particulièrement aux développeurs IBM i, car ZF1 est à mon avis l'un des frameworks PHP les mieux adaptés pour le développement de projets destinés à la plateforme IBM i.
+
+Pour la petite histoire, j'avais laissé ce projet de côté, après l'annonce de l'abandon de ZF 1 par son éditeur (Zend), au profit du projet ZF 2, très différent donc incompatible avec la version 1 (une version 2 qui à mon sens n'a jamais tenu ses promesses).
+
+J'ai réactivé ZFP4 après avoir découvert que le projet ZF 1 était remis sur les rails par une communauté active et motivée, sous le nom de "ZF1-Future".
+
+Ce projet est donc construit sur une base de ZF 1, ou plus exactement sur la version 1.21 de ZF1-Future.
+ZF1-Future ayant été révisé pour PHP8, j'ai vérifié l'ensemble du code de ZFP4 pour m'assurer qu'il était bien compatible avec PHP8 et ZF1-Future. J'en ai profité pour éliminer quelques fonctionnalités obsolètes, et pour moderniser le design en m'appuyant sur le framework CSS Booststrap 4.
+
+Cette révision de ZFP4 m'a amené à appliquer quelques patchs sur ZF1-Future, patchs que j'ai listés dans le README du projet.
+
+Pourquoi ce projet porte-t-il le numéro "4" ? Parce que ce projet a connu plusieurs évolutions. Cette version 4 est de loin la plus aboutie, et la première que je publie en open-source.
+
+Prenez ZFP4 pour ce qu'il est. Ce n'est pas un projet parfait, prêt à l'emploi, c'est un exemple conçu pour vous familiariser avec ZF1, que vous pouvez adapter à votre convenance, et à vos propres spécificités "métier". 
+
 ## Installation
 
 L'application a été testée sur le stack PHP XAMPP (Apache Friends) avec PHP 8.0.12 et PHP 8.1.5.
