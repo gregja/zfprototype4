@@ -85,12 +85,10 @@ const personnesModule = (function (jQuery, Pagination) {
 
         if (currentTarget.hasAttribute('data-href')) {
           offset = currentTarget.parentNode.getAttribute('data-offset');
-          console.log(offset)
           if (offset == 'prev' || offset == 'next') {
             let parent = currentTarget.parentNode.parentNode;
             let tmpoffset = Number(parent.getAttribute('data-offset'));
             let tmptotal = Number(parent.getAttribute('data-total'));
-            console.log(tmpoffset)
             if (offset == 'prev') {
               tmpoffset -= NB_LIGNES_MAX;
               if (tmpoffset <= 0) {
@@ -102,11 +100,9 @@ const personnesModule = (function (jQuery, Pagination) {
                 tmpoffset = tmptotal;
               }
             }
-            console.log(tmpoffset)
             offset = tmpoffset;
           }
         }
-
         if (offset != null) {
           HttpFetchAll(filterModaleTarget.value, offset);
         }
@@ -203,15 +199,11 @@ const personnesModule = (function (jQuery, Pagination) {
    * Appel de l'API de chargement de la liste des personnes 
    * (alimente la liste de la fenêtre modale)
    * @param {*} filtre 
-   * @param {*} offset 
-   * @param {*} count 
+   * @param {*} offset  
    */
-  function HttpFetchAll(filtre="", offset=0, count=0) {
-    if (count <= 0) {
-      count = NB_LIGNES_MAX;
-    }
+  function HttpFetchAll(filtre="", offset=0) {
     filtre = String(filtre).trim();
-    let url = `${API_GETPERSONNES}?term=${filtre}&count=${count}&offset=${offset}`;
+    let url = `${API_GETPERSONNES}?term=${filtre}&count=${NB_LIGNES_MAX}&offset=${offset}`;
     fetch(url)
       .then(response => response.json())
       .then(datas => {
@@ -227,7 +219,7 @@ const personnesModule = (function (jQuery, Pagination) {
               newnode.innerHTML = html;
               tbodyTarget.appendChild(newnode);
           })       
-          pagenavGenerator(datas.count, offset, count); 
+          pagenavGenerator(datas.count, offset, NB_LIGNES_MAX); 
       });
     }
 
