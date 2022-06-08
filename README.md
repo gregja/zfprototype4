@@ -317,15 +317,9 @@ Il y a plein de choses à améliorer dans cette application, comme par exemple :
 
 - dans la table "prm_personne", il y a redondance entre la colonne "id" et la colonne "code". La première est un identifiant interne, la seconde est destinée à stocker un code plus parlant pour les utilisateurs. Mais en réalité cette colonne "code" n'est pas utilisée dans cette version de l'application, et sa présence peut prêter à confusion. Il conviendrait de faire évoluer le formulaire de saisie de dossier pour permettre la saisie du "code" des personnes, au lieu de leur "id" tout en faisant la translation "code" vers "id" avant enregistrement en base de données.
 
-- implémenter un exemple de formulaire avec des champs en autocomplétion, soit au travers de la balise "datalist", soit au travers d'un composant JS tel que l'excellent "chosen" : https://harvesthq.github.io/chosen/
-
-- refactoriser le code JS de la page d'édition de dossier pour qu'il soit réutilisable sur d'autres pages, 
-en profiter pour externaliser le code JS dans des fichiers distincts, importés via le mot clé "import"
-
 - le nom de la personne n'apparaît que sur le formulaire d'édition, il conviendrait de l'ajouter aux formulaires de visu et de suppression
 
-- dans la fenêtre modale, charger la liste des personnes dynamiquement, page par page, avec un mécanisme de 
-pagination intégré, car la solution actuelle n'est viable que pour des tables contenant peu de lignes (performances désastreuses sur de grosses tables). A noter que ce chargement dynamique (page par page) aura un impact sur la manière de charger le nom de la personne (sur les formulaires d'édition, d'affichage et de suppression)
+- implémenter un exemple de formulaire avec des champs en autocomplétion, soit au travers de la balise "datalist", soit au travers d'un composant JS tel que l'excellent "chosen" : https://harvesthq.github.io/chosen/
 
 
 Du côté de ZF1, quelques idées d'améliorations :
