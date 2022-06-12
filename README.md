@@ -21,7 +21,7 @@ Prenez ZFP4 pour ce qu'il est. Ce n'est pas un projet parfait, prêt à l'emploi
 
 L'application a été testée sur le stack PHP XAMPP (Apache Friends) avec PHP 8.0.12 et PHP 8.1.5.
 
-L'extension PHP "gc" doit être activée pour permettre aux fonctions d''export PDF de fonctionner.
+L'extension PHP "gd" doit être activée pour permettre aux fonctions d''export PDF de fonctionner.
 
 L'extension "pdo_mysql" doit être activée également.
 
