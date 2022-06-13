@@ -317,7 +317,7 @@ Il y a plein de choses à améliorer dans cette application, comme par exemple :
 
 - dans la table "prm_personne", il y a redondance entre la colonne "id" et la colonne "code". La première est un identifiant interne, la seconde est destinée à stocker un code plus parlant pour les utilisateurs. Mais en réalité cette colonne "code" n'est pas utilisée dans cette version de l'application, et sa présence peut prêter à confusion. Il conviendrait de faire évoluer le formulaire de saisie de dossier pour permettre la saisie du "code" des personnes, au lieu de leur "id" tout en faisant la translation "code" vers "id" avant enregistrement en base de données.
 
-- le nom de la personne n'apparaît que sur le formulaire d'édition, il conviendrait de l'ajouter aux formulaires de visu et de suppression
+- le nom de la personne n'apparaît que sur le formulaire d'édition de dossier, il conviendrait de l'ajouter aux formulaires de visu et de suppression de dossier
 
 - implémenter un exemple de formulaire avec des champs en autocomplétion, soit au travers de la balise "datalist", soit au travers d'un composant JS tel que l'excellent "chosen" : https://harvesthq.github.io/chosen/
 
