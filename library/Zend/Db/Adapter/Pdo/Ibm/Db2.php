@@ -41,6 +41,7 @@ class Zend_Db_Adapter_Pdo_Ibm_Db2
      * @var Zend_Db_Adapter_Abstract
      */
     protected $_adapter = null;
+    protected $_typConnex = '';
 
     /**
      * Construct the data server class.
@@ -50,9 +51,10 @@ class Zend_Db_Adapter_Pdo_Ibm_Db2
      *
      * @param Zend_Db_Adapter_Abstract $adapter
      */
-    public function __construct($adapter)
+    public function __construct($adapter, $typConnex="")
     {
         $this->_adapter = $adapter;
+        $this->_typConnex = $typConnex;
     }
 
     /**
@@ -76,27 +78,70 @@ class Zend_Db_Adapter_Pdo_Ibm_Db2
      */
     public function describeTable($tableName, $schemaName = null)
     {
-        $sql = "SELECT DISTINCT c.tabschema, c.tabname, c.colname, c.colno,
-                c.typename, c.default, c.nulls, c.length, c.scale,
-                c.identity, tc.type AS tabconsttype, k.colseq
-                FROM syscat.columns c
-                LEFT JOIN (syscat.keycoluse k JOIN syscat.tabconst tc
-                 ON (k.tabschema = tc.tabschema
-                   AND k.tabname = tc.tabname
-                   AND tc.type = 'P'))
-                 ON (c.tabschema = k.tabschema
-                 AND c.tabname = k.tabname
-                 AND c.colname = k.colname)
-            WHERE "
-            . $this->_adapter->quoteInto('UPPER(c.tabname) = UPPER(?)', $tableName);
-        if ($schemaName) {
-            $sql .= $this->_adapter->quoteInto(' AND UPPER(c.tabschema) = UPPER(?)', $schemaName);
+
+        /*
+         * patch - Begin
+         * patch proposé sur : http://framework.zend.com/issues/browse/ZF-10415
+         * (suppression des fonctions UPPER à l'intérieur du code SQL, et
+         * utilisation des fonction mb_strtoupper en amont)
+         * + mise en variable de la clause DISTINCT qui est inutile si
+         * le nom de la base est connu
+         * + suppression des injections SQL au profit de requêtes SQL paramétrées
+        */
+        $tableName = mb_strtoupper($tableName) ;
+        if ($schemaName !== null) {
+            $schemaName =  mb_strtoupper($schemaName);
+            $distinct = '' ;
+        } else {
+            $distinct = 'DISTINCT' ;
         }
-        $sql .= " ORDER BY c.colno";
+        $bind_params = [];
+        if ($this->_typConnex == 'odbc') {
+            // DB2 for i specific query
+            $sql = "SELECT {$distinct} C.TABLE_SCHEMA, C.TABLE_NAME, C.COLUMN_NAME, C.ORDINAL_POSITION,
+                C.DATA_TYPE, C.COLUMN_DEFAULT, C.NULLS ,C.LENGTH, C.SCALE, LEFT(C.IDENTITY, 1) as identity,
+                LEFT(tc.TYPE, 1) AS tabconsttype, k.COLSEQ
+                FROM QSYS2.SYSCOLUMNS C
+                LEFT JOIN (QSYS2.syskeycst k JOIN QSYS2.SYSCST tc
+                    ON (k.TABLE_SCHEMA = tc.TABLE_SCHEMA
+                      AND k.TABLE_NAME = tc.TABLE_NAME
+                      AND LEFT(tc.type, 1) = 'P'))
+                    ON (C.TABLE_SCHEMA = k.TABLE_SCHEMA
+                       AND C.TABLE_NAME = k.TABLE_NAME
+                       AND C.COLUMN_NAME = k.COLUMN_NAME)
+                WHERE C.TABLE_NAME = ?";
+            $bind_params[]= $tableName;
+            if ($schemaName) {
+                $sql .= ' AND C.TABLE_SCHEMA = ?';
+                $bind_params[]= $schemaName;
+            }
+            $sql .= " ORDER BY C.ORDINAL_POSITION FOR FETCH ONLY";
+        } else {
+            $sql = "SELECT {$distinct} c.tabschema, c.tabname, c.colname, c.colno,
+            c.typename, c.default, c.nulls, c.length, c.scale,
+            c.identity, tc.type AS tabconsttype, k.colseq
+            FROM syscat.columns c
+            LEFT JOIN (syscat.keycoluse k JOIN syscat.tabconst tc
+             ON (k.tabschema = tc.tabschema
+               AND k.tabname = tc.tabname
+               AND tc.type = 'P'))
+             ON (c.tabschema = k.tabschema
+             AND c.tabname = k.tabname
+             AND c.colname = k.colname)
+                WHERE c.tabname = ?";
+                $bind_params[]= $tableName;
+            if ($schemaName) {
+                $sql .= ' AND c.tabschema = ?';
+                $bind_params[]= $schemaName;
+            }
+        }
 
         $desc = [];
-        $stmt = $this->_adapter->query($sql);
-
+        $stmt = $this->_adapter->query($sql, $bind_params);
+        /*
+         * patch GJARRIGE - End
+        */
+        
         /**
          * To avoid case issues, fetch using FETCH_NUM
          */

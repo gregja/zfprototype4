@@ -159,6 +159,7 @@ répertoires de Google sur le principe suivant :
 ```PHP
     public function describeTable($tableName, $schemaName = null)
     {
+
         /*
          * patch - Begin
          * patch proposé sur : http://framework.zend.com/issues/browse/ZF-10415
@@ -166,6 +167,7 @@ répertoires de Google sur le principe suivant :
          * utilisation des fonction mb_strtoupper en amont)
          * + mise en variable de la clause DISTINCT qui est inutile si
          * le nom de la base est connu
+         * + suppression des injections SQL au profit de requêtes SQL paramétrées
         */
         $tableName = mb_strtoupper($tableName) ;
         if ($schemaName !== null) {
@@ -174,23 +176,49 @@ répertoires de Google sur le principe suivant :
         } else {
             $distinct = 'DISTINCT' ;
         }
-
-        $sql = "SELECT {$distinct} c.tabschema, c.tabname, c.colname, c.colno,
-                c.typename, c.default, c.nulls, c.length, c.scale,
-                c.identity, tc.type AS tabconsttype, k.colseq
-                FROM syscat.columns c
-                LEFT JOIN (syscat.keycoluse k JOIN syscat.tabconst tc
-                 ON (k.tabschema = tc.tabschema
-                   AND k.tabname = tc.tabname
-                   AND tc.type = 'P'))
-                 ON (c.tabschema = k.tabschema
-                 AND c.tabname = k.tabname
-                 AND c.colname = k.colname)
-            WHERE "
-            . $this->_adapter->quoteInto('c.tabname = ?', $tableName);
-        if ($schemaName) {
-            $sql .= $this->_adapter->quoteInto(' AND c.tabschema = ?', $schemaName);
+        $bind_params = [];
+        if ($this->_typConnex == 'odbc') {
+            // DB2 for i specific query
+            $sql = "SELECT {$distinct} C.TABLE_SCHEMA, C.TABLE_NAME, C.COLUMN_NAME, C.ORDINAL_POSITION,
+                C.DATA_TYPE, C.COLUMN_DEFAULT, C.NULLS ,C.LENGTH, C.SCALE, LEFT(C.IDENTITY, 1) as identity,
+                LEFT(tc.TYPE, 1) AS tabconsttype, k.COLSEQ
+                FROM QSYS2.SYSCOLUMNS C
+                LEFT JOIN (QSYS2.syskeycst k JOIN QSYS2.SYSCST tc
+                    ON (k.TABLE_SCHEMA = tc.TABLE_SCHEMA
+                      AND k.TABLE_NAME = tc.TABLE_NAME
+                      AND LEFT(tc.type, 1) = 'P'))
+                    ON (C.TABLE_SCHEMA = k.TABLE_SCHEMA
+                       AND C.TABLE_NAME = k.TABLE_NAME
+                       AND C.COLUMN_NAME = k.COLUMN_NAME)
+                WHERE C.TABLE_NAME = ?";
+            $bind_params[]= $tableName;
+            if ($schemaName) {
+                $sql .= ' AND C.TABLE_SCHEMA = ?';
+                $bind_params[]= $schemaName;
+            }
+            $sql .= " ORDER BY C.ORDINAL_POSITION FOR FETCH ONLY";
+        } else {
+            $sql = "SELECT {$distinct} c.tabschema, c.tabname, c.colname, c.colno,
+            c.typename, c.default, c.nulls, c.length, c.scale,
+            c.identity, tc.type AS tabconsttype, k.colseq
+            FROM syscat.columns c
+            LEFT JOIN (syscat.keycoluse k JOIN syscat.tabconst tc
+             ON (k.tabschema = tc.tabschema
+               AND k.tabname = tc.tabname
+               AND tc.type = 'P'))
+             ON (c.tabschema = k.tabschema
+             AND c.tabname = k.tabname
+             AND c.colname = k.colname)
+                WHERE c.tabname = ?";
+                $bind_params[]= $tableName;
+            if ($schemaName) {
+                $sql .= ' AND c.tabschema = ?';
+                $bind_params[]= $schemaName;
+            }
         }
+
+        $desc = [];
+        $stmt = $this->_adapter->query($sql, $bind_params);
         /*
          * patch GJARRIGE - End
         */
@@ -213,6 +241,7 @@ répertoires de Google sur le principe suivant :
          * utilisation des fonction mb_strtoupper en amont)
          * + mise en variable de la clause DISTINCT qui est inutile si
          * le nom de la base est connu
+         * + suppression des injections SQL au profit de requêtes SQL paramétrées
         */
         $tableName = mb_strtoupper($tableName) ;
         if ($schemaName !== null) {
@@ -221,7 +250,7 @@ répertoires de Google sur le principe suivant :
         } else {
             $distinct = 'DISTINCT' ;
         }
-
+        $bind_params = [];
         if (!$this->_isI5) {
             $sql = "SELECT {$distinct} c.tabschema, c.tabname, c.colname, c.colno,
                 c.typename, c.default, c.nulls, c.length, c.scale,
@@ -234,20 +263,19 @@ répertoires de Google sur le principe suivant :
                 ON (c.tabschema = k.tabschema
                     AND c.tabname = k.tabname
                     AND c.colname = k.colname)
-                WHERE "
-                . $this->quoteInto('c.tabname = ?', $tableName);
-
+                WHERE c.tabname = ?";
+            $bind_params[]= $tableName;
             if ($schemaName) {
-               $sql .= $this->quoteInto(' AND c.tabschema = ?', $schemaName);
+               $sql .= ' AND c.tabschema = ?';
+               $bind_params[]= $schemaName;
             }
-
             $sql .= " ORDER BY c.colno";
 
         } else {
 
             // DB2 On I5 specific query
             $sql = "SELECT {$distinct} C.TABLE_SCHEMA, C.TABLE_NAME, C.COLUMN_NAME, C.ORDINAL_POSITION,
-                C.DATA_TYPE, C.COLUMN_DEFAULT, C.NULLS ,C.LENGTH, C.SCALE, LEFT(C.IDENTITY, 1),
+                C.DATA_TYPE, C.COLUMN_DEFAULT, C.NULLS ,C.LENGTH, C.SCALE, LEFT(C.IDENTITY, 1) as identity,
                 LEFT(tc.TYPE, 1) AS tabconsttype, k.COLSEQ
                 FROM QSYS2.SYSCOLUMNS C
                 LEFT JOIN (QSYS2.syskeycst k JOIN QSYS2.SYSCST tc
@@ -257,15 +285,19 @@ répertoires de Google sur le principe suivant :
                     ON (C.TABLE_SCHEMA = k.TABLE_SCHEMA
                        AND C.TABLE_NAME = k.TABLE_NAME
                        AND C.COLUMN_NAME = k.COLUMN_NAME)
-                WHERE "
-                . $this->quoteInto('C.TABLE_NAME = ?', $tableName);
+                WHERE C.TABLE_NAME = ?";
+            $bind_params[]= $tableName;
 
             if ($schemaName) {
-                $sql .= $this->quoteInto(' AND C.TABLE_SCHEMA = ?', $schemaName);
+                $sql .= ' AND C.TABLE_SCHEMA = ?';
+                $bind_params[]= $schemaName;
             }
 
             $sql .= " ORDER BY C.ORDINAL_POSITION FOR FETCH ONLY";
         }
+
+        $desc = [];
+        $stmt = $this->query($sql, $bind_params);
         /*
          * patch GJARRIGE - End
          */

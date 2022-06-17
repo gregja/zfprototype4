@@ -75,6 +75,13 @@ abstract class Zend_Db_Adapter_Pdo_Abstract extends Zend_Db_Adapter_Abstract
             $dsn[$key] = "$key=$val";
         }
 
+        /*
+        if ($this->_pdoType == 'DB2i') {
+            return "odbc:Driver={IBM i Access ODBC Driver};" . implode(';', $dsn);
+        } else {
+            return $this->_pdoType . ':' . implode(';', $dsn);
+        }
+        */
         return $this->_pdoType . ':' . implode(';', $dsn);
     }
 
@@ -104,7 +111,7 @@ abstract class Zend_Db_Adapter_Pdo_Abstract extends Zend_Db_Adapter_Abstract
         }
 
         // check the PDO driver is available
-        if (!in_array($this->_pdoType, PDO::getAvailableDrivers())) {
+        if (!array_key_exists('connexion', $this->_config) && !in_array($this->_pdoType, PDO::getAvailableDrivers())) {
             /**
              * @see Zend_Db_Adapter_Exception
              */
@@ -113,7 +120,9 @@ abstract class Zend_Db_Adapter_Pdo_Abstract extends Zend_Db_Adapter_Abstract
         }
 
         // create PDO connection
-        $q = $this->_profiler->queryStart('connect', Zend_Db_Profiler::CONNECT);
+        if (!array_key_exists('connexion', $this->_config)) {
+            $q = $this->_profiler->queryStart('connect', Zend_Db_Profiler::CONNECT);
+        }
 
         // add the persistence flag if we find it in our config array
         if (isset($this->_config['persistent']) && ($this->_config['persistent'] == true)) {
@@ -128,7 +137,9 @@ abstract class Zend_Db_Adapter_Pdo_Abstract extends Zend_Db_Adapter_Abstract
                 $this->_config['driver_options']
             );
 
-            $this->_profiler->queryEnd($q);
+            if (!array_key_exists('connexion', $this->_config)) {
+                $this->_profiler->queryEnd($q);
+            }
 
             // set the PDO connection to perform case-folding on array keys, or not
             $this->_connection->setAttribute(PDO::ATTR_CASE, $this->_caseFolding);

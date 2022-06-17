@@ -47,6 +47,7 @@ class Zend_Db_Adapter_Pdo_Ibm extends Zend_Db_Adapter_Pdo_Abstract
      * @var string
      */
     protected $_pdoType = 'ibm';
+    protected $_typConnex = '';
 
     /**
      * The IBM data server connected to
@@ -106,7 +107,7 @@ class Zend_Db_Adapter_Pdo_Ibm extends Zend_Db_Adapter_Pdo_Abstract
 
                 switch ($server) {
                     case 'DB2':
-                        $this->_serverType = new Zend_Db_Adapter_Pdo_Ibm_Db2($this);
+                        $this->_serverType = new Zend_Db_Adapter_Pdo_Ibm_Db2($this, $this->_typConnex);
 
                         // Add DB2-specific numeric types
                         $this->_numericDataTypes['DECFLOAT'] = Zend_Db::FLOAT_TYPE;
@@ -151,16 +152,38 @@ class Zend_Db_Adapter_Pdo_Ibm extends Zend_Db_Adapter_Pdo_Abstract
 
         // check if using full connection string
         if (array_key_exists('host', $this->_config)) {
-            $dsn = ';DATABASE=' . $this->_config['dbname']
-            . ';HOSTNAME=' . $this->_config['host']
-            . ';PORT='     . $this->_config['port']
-            // PDO_IBM supports only DB2 TCPIP protocol
-            . ';PROTOCOL=' . 'TCPIP;';
+            if (array_key_exists('connexion', $this->_config)) {
+                $this->_typConnex = 'odbc';
+                if ((int)$this->_config['naming'] == 0) {
+                    $prefixdb = "DATABASE";
+                } else {
+                    $prefixdb = "DBQ";
+                }
+                $dsn = 'odbc:Driver={IBM i Access ODBC Driver}' .
+                ';NAM=' . $this->_config['naming'] 
+                . ';'.$prefixdb.'=' . $this->_config['dbname']
+                . ';SYSTEM=' . $this->_config['host']
+                . ';PORT=' . $this->_config['port'];
+            } else {
+                $dsn = $this->_pdoType . ': ' . 'DATABASE=' . $this->_config['dbname']
+                . ';HOSTNAME=' . $this->_config['host']
+                . ';PORT='     . $this->_config['port']
+                // PDO_IBM supports only DB2 TCPIP protocol
+                . ';PROTOCOL=' . 'TCPIP;';
+            }
         } else {
             // catalogued connection
-            $dsn = $this->_config['dbname'];
+            $dsn = $this->_pdoType . ': ' . $this->_config['dbname'];
         }
-        return $this->_pdoType . ': ' . $dsn;
+
+        return $dsn;
+    }
+
+    /**
+     * Overriding : pas de "quoting" avec DB2
+     */
+    protected function _quote($value) {
+        return $value;
     }
 
     /**

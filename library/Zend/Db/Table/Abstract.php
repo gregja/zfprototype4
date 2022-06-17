@@ -661,7 +661,7 @@ abstract class Zend_Db_Table_Abstract
      */
     public function getMetadataCache() {
         /*
-         * patch GJARRIGE du 23/02/2011 - Begin
+         * patch GJARRIGE - Begin
         */
         // return $this->_metadataCache;
         if ($this->_metadataCache === null) {
@@ -670,7 +670,7 @@ abstract class Zend_Db_Table_Abstract
             return $this->_metadataCache;
         }
         /*
-         * patch GJARRIGE du 23/02/2011 - End
+         * patch GJARRIGE - End
         */
     }
 
@@ -885,7 +885,7 @@ abstract class Zend_Db_Table_Abstract
             $this->_setupMetadata();
             $this->_primary = [];
             foreach ($this->_metadata as $col) {
-                if ($col['PRIMARY']) {
+                if (isset($col['PRIMARY'])) {
                     $this->_primary[ $col['PRIMARY_POSITION'] ] = $col['COLUMN_NAME'];
                     if ($col['IDENTITY']) {
                         $this->_identity = $col['PRIMARY_POSITION'];
@@ -904,7 +904,6 @@ abstract class Zend_Db_Table_Abstract
             array_unshift($this->_primary, null);
             unset($this->_primary[0]);
         }
-
         $cols = $this->_getCols();
         if (! array_intersect((array) $this->_primary, $cols) == (array) $this->_primary) {
             require_once 'Zend/Db/Table/Exception.php';
