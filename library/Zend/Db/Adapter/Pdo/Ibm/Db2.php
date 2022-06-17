@@ -78,6 +78,8 @@ class Zend_Db_Adapter_Pdo_Ibm_Db2
      */
     public function describeTable($tableName, $schemaName = null)
     {
+        // Ensure the connection is made so that _isI5 is set
+        //$this->_connect();
 
         /*
          * patch - Begin
@@ -86,7 +88,6 @@ class Zend_Db_Adapter_Pdo_Ibm_Db2
          * utilisation des fonction mb_strtoupper en amont)
          * + mise en variable de la clause DISTINCT qui est inutile si
          * le nom de la base est connu
-         * + suppression des injections SQL au profit de requêtes SQL paramétrées
         */
         $tableName = mb_strtoupper($tableName) ;
         if ($schemaName !== null) {
@@ -136,12 +137,12 @@ class Zend_Db_Adapter_Pdo_Ibm_Db2
             }
         }
 
-        $desc = [];
-        $stmt = $this->_adapter->query($sql, $bind_params);
         /*
          * patch GJARRIGE - End
         */
-        
+        $desc = [];
+        $stmt = $this->_adapter->query($sql, $bind_params);
+
         /**
          * To avoid case issues, fetch using FETCH_NUM
          */

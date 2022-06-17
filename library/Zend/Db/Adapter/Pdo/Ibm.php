@@ -176,6 +176,7 @@ class Zend_Db_Adapter_Pdo_Ibm extends Zend_Db_Adapter_Pdo_Abstract
             $dsn = $this->_pdoType . ': ' . $this->_config['dbname'];
         }
 
+        error_log($dsn);
         return $dsn;
     }
 

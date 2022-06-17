@@ -393,7 +393,6 @@ class Zend_Db_Adapter_Db2 extends Zend_Db_Adapter_Abstract
          * utilisation des fonction mb_strtoupper en amont)
          * + mise en variable de la clause DISTINCT qui est inutile si
          * le nom de la base est connu
-         * + suppression des injections SQL au profit de requêtes SQL paramétrées
         */
         $tableName = mb_strtoupper($tableName) ;
         if ($schemaName !== null) {
@@ -447,13 +446,13 @@ class Zend_Db_Adapter_Db2 extends Zend_Db_Adapter_Abstract
 
             $sql .= " ORDER BY C.ORDINAL_POSITION FOR FETCH ONLY";
         }
-
-        $desc = [];
-        $stmt = $this->query($sql, $bind_params);
         /*
          * patch GJARRIGE - End
          */
-        
+
+        $desc = [];
+        $stmt = $this->query($sql, $bind_params);
+
         /**
          * To avoid case issues, fetch using FETCH_NUM
          */

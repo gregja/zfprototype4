@@ -59,6 +59,7 @@ class Zend_Db_Statement_Db2 extends Zend_Db_Statement
 
         // db2_prepare on i5 emits errors, these need to be
         // suppressed so that proper exceptions can be thrown
+        error_log($sql);
         $this->_stmt = @db2_prepare($connection, $sql);
 
         if (!$this->_stmt) {
